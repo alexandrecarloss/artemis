@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+{% block titulo %}Cadastro{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                  {% if error %}
+                    <div class="alert alert-danger mt-3" role="alert">
+                  {{ error }}
+                  </div>
+                  {% endif %}
+                  {% for message in messages %}
+                    {% if message.tags == 'error' %}
+                      <div class="alert alert-danger mt-3" role="alert">
+                        {{message}}
+                      </div>
+                    {% else %}
+                      <div class="alert alert-{{message.tags}}">
+                        {{message}}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                  <div id="camposPessoaFisica">
+                    <form id="cadastroForm" method="post">
+                      {% csrf_token %}
+                      <label for="">Selecione seu tipo:</label>
+                        <div class="form-group">                                   
+                          <div class="form-check form-check-inline ">
+                            <input class="form-check-input" type="radio" name="tipoPessoa" id="pessoaFisica" value="pessoaFisica" checked>
+                            <label class="form-check-label" for="pessoaFisica">
+                              Pessoa Física
+                            </label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="tipoPessoa" id="ong" value="ong">
+                            <label class="form-check-label" for="ong">
+                              ONG
+                            </label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="tipoPessoa" id="pessoaJuridica" value="pessoaJuridica">
+                            <label class="form-check-label" for="pessoaJuridica">
+                              Pet Shop
+                            </label>
+                          </div>
+                        </div>
+                        <!-- Início pessoa física -->                      
+                          <h4 class="mb-3">Informações de Pessoa Física</h4>                         
+                          <div class="form-group">
+                            <label for="pesnome">Nome:</label>
+                            <input type="text" class="form-control" id="pesnome" name="pesnome" placeholder="Nome" required maxlength="100">
+                          </div>
+                          <div class="form-group">
+                            <label for="pescpf">CPF:</label>
+                            <input type="text" class="form-control" id="pescpf" name="pescpf" placeholder="CPF" required onkeydown="javascript: fMasc( this, mCPF );" maxlength="14">
+                          </div>
+                          <div class="form-group">
+                            <label for="pesdtnascto">Data de Nascimento:</label>
+                            <input type="date" class="form-control" id="pesdtnascto" name="pesdtnascto" placeholder="Data de Nascimento"
+                              required>
+                          </div>
+                          <div class="form-group">
+                            <label>Sexo:</label><br>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="pessexo" id="masculino" value="M" required>
+                              <label class="form-check-label" for="masculino">Masculino</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="pessexo" id="feminino" value="F" required>
+                              <label class="form-check-label" for="feminino">Feminino</label>
+                            </div>
+                          </div>
+                          <p>
+                            <div class="form-group">
+                              <label for="iest">Estado</label>
+                              <select name="pesestado" id="iest" required>
+                                  <optgroup label="Região Norte">
+                                      <option value="AC">Acre</option>
+                                      <option value="AP">Amapá</option>
+                                      <option value="AM" selected>Amazonas</option>
+                                      <option value="PA">Pará</option>
+                                      <option value="RO">Rondônia</option>
+                                      <option value="RR">Roraima</option>
+                                      <option value="TO">Tocantins</option>
+                                  </optgroup>
+                                  <optgroup label="Região Nordeste">
+                                      <option value="AL">Alagoas</option>
+                                      <option value="BA">Bahia</option>
+                                      <option value="CE">Ceará</option>
+                                      <option value="MA">Maranhão</option>
+                                      <option value="PB">Paraíba</option>
+                                      <option value="PE">Pernambuco</option>
+                                      <option value="PI">Piauí</option>
+                                      <option value="RN">Rio Grande do Norte</option>
+                                      <option value="SE">Sergipe</option>
+                                  </optgroup>
+                                  <optgroup label="Região centro-oeste">
+                                      <option value="GO">Goiás</option>
+                                      <option value="MT">Mato Grosso</option>
+                                      <option value="MS">Mato Grosso do Sul</option>
+                                  </optgroup>
+                                  <optgroup label="Região Sudeste">
+                                      <option value="ES">Espírito Santo</option>
+                                      <option value="RJ">Rio de Janeiro</option>
+                                      <option value="MG">Minas Gerais</option>
+                                      <option value="SP">São Paulo</option>
+                                  </optgroup>
+                                  <optgroup label="Região Sul">
+                                      <option value="PR">Paraná</option>
+                                      <option value="RS">Rio Grande do Sul</option>
+                                      <option value="SC">Santa Catarina</option>
+                                  </optgroup>
+                              </select>
+                            </div>
+                          </p>
+                          <div class="form-group">
+                            <label for="pescidade">Cidade:</label>
+                            <input type="text" class="form-control" id="pescidade" name="pescidade" placeholder="Cidade" required maxlength="65">
+                          </div>
+                          <div class="form-group">
+                            <label for="pesbairro">Bairro:</label>
+                            <input type="text" class="form-control" id="pesbairro" name="pesbairro" placeholder="Bairro" required maxlength="65">
+                          </div>
+                          <div class="form-group">
+                            <label for="pesrua">Rua:</label>
+                            <input type="text" class="form-control" id="pesrua" name="pesrua" placeholder="Rua" required maxlength="65">
+                          </div>
+                          <div class="form-group">
+                            <label for="pesnumero">Número:</label>
+                            <input type="number" class="form-control" id="pesnumero" name="pesnumero" placeholder="Número" required>
+                          </div>
+                          <div class="form-group">
+                            <label for="pestelefone">Telefone:</label>
+                            <input type="tel" class="form-control" id="pestelefone" name="pestelefone" placeholder="Telefone" required onkeydown="javascript: fMasc( this, mTel );" maxlength="14">
+                          </div> 
+                          
+                          <!-- Fim pessoa física                         -->
+                          <button type="submit" class="btn primaria btn-block mt-4">Enviar</button>
+                        </form>
+                      </div>
+                      <div id="camposONG" style="display:none;">
+                        <form id="cadastroForm" method="post">
+                          {% csrf_token %}                       
+                          <label for="">Selecione seu tipo:</label>
+                          <div class="form-group">                                   
+                            <div class="form-check form-check-inline ">
+                              <input class="form-check-input" type="radio" name="tipoPessoa" id="pessoaFisica" value="pessoaFisica">
+                              <label class="form-check-label" for="pessoaFisica">
+                                Pessoa Física
+                              </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="tipoPessoa" id="ong" value="ong" checked>
+                              <label class="form-check-label" for="ong">
+                                ONG
+                              </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="tipoPessoa" id="pessoaJuridica" value="pessoaJuridica">
+                              <label class="form-check-label" for="pessoaJuridica">
+                                Pet Shop
+                              </label>
+                            </div>
+                          </div>                       
+                          <!-- Início ONG -->
+                          <h4 class="mb-3">Informações de ONG</h4>
+                          <div class="form-group">
+                            <label for="nomeONG">Nome da ONG:</label>
+                            <input type="text" class="form-control" id="nomeONG" placeholder="Nome da ONG" required name="nomeONG" maxlength="65">
+                          </div>
+                          <div class="form-group">
+                            <label for="cidadeONG">Cidade:</label>
+                            <input type="text" class="form-control" id="cidadeONG" name="cidadeONG" placeholder="Cidade" required maxlength="70">
+                          </div>
+                          <p>
+                            <div class="form-group">
+                              <label for="iestong">Estado</label>
+                              <select name="ongestado" id="iestong" required>
+                                  <optgroup label="Região Norte">
+                                      <option value="AC">Acre</option>
+                                      <option value="AP">Amapá</option>
+                                      <option value="AM" selected>Amazonas</option>
+                                      <option value="PA">Pará</option>
+                                      <option value="RO">Rondônia</option>
+                                      <option value="RR">Roraima</option>
+                                      <option value="TO">Tocantins</option>
+                                  </optgroup>
+                                  <optgroup label="Região Nordeste">
+                                      <option value="AL">Alagoas</option>
+                                      <option value="BA">Bahia</option>
+                                      <option value="CE">Ceará</option>
+                                      <option value="MA">Maranhão</option>
+                                      <option value="PB">Paraíba</option>
+                                      <option value="PE">Pernambuco</option>
+                                      <option value="PI">Piauí</option>
+                                      <option value="RN">Rio Grande do Norte</option>
+                                      <option value="SE">Sergipe</option>
+                                  </optgroup>
+                                  <optgroup label="Região centro-oeste">
+                                      <option value="GO">Goiás</option>
+                                      <option value="MT">Mato Grosso</option>
+                                      <option value="MS">Mato Grosso do Sul</option>
+                                  </optgroup>
+                                  <optgroup label="Região Sudeste">
+                                      <option value="ES">Espírito Santo</option>
+                                      <option value="RJ">Rio de Janeiro</option>
+                                      <option value="MG">Minas Gerais</option>
+                                      <option value="SP">São Paulo</option>
+                                  </optgroup>
+                                  <optgroup label="Região Sul">
+                                      <option value="PR">Paraná</option>
+                                      <option value="RS">Rio Grande do Sul</option>
+                                      <option value="SC">Santa Catarina</option>
+                                  </optgroup>
+                              </select>
+                            </div>
+                          </p>
+                          <div class="form-group">
+                            <label for="bairroONG">Bairro:</label>
+                            <input type="text" class="form-control" name="bairroONG" id="bairroONG" placeholder="Bairro" required maxlength="70">
+                          </div>
+                          <div class="form-group">
+                            <label for="ruaONG">Rua:</label>
+                            <input type="text" class="form-control" id="ruaONG" name="ruaONG" required maxlength="70">
+                          </div>
+                          <div class="form-group">
+                            <label for="numONG">Número:</label>
+                            <input type="number" class="form-control" id="numONG" name="numONG" placeholder="Número" required>
+                          </div>
+                          <div class="form-group">
+                            <label for="telefoneONG">Telefone:</label>
+                            <input type="tel" class="form-control" name="telefoneONG" id="telefoneONG" placeholder="Telefone" required onkeydown="javascript: fMasc( this, mTel );" maxlength="14">
+                          </div>
+                          <button type="submit" class="btn primaria btn-block mt-4">Enviar</button>
+                        </form>
+                      </div>        
+                        <!-- Fim ONG -->
+                        <!-- Início pessoa jurídica   -->
+                        <div id="camposPessoaJuridica" style="display:none;">
+                          <form id="cadastroForm" method="post">
+                            {% csrf_token %}
+                            <label for="">Selecione seu tipo:</label>
+                          <div class="form-group">                                   
+                            <div class="form-check form-check-inline ">
+                              <input class="form-check-input" type="radio" name="tipoPessoa" id="pessoaFisica" value="pessoaFisica">
+                              <label class="form-check-label" for="pessoaFisica">
+                                Pessoa Física
+                              </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="tipoPessoa" id="ong" value="ong">
+                              <label class="form-check-label" for="ong">
+                                ONG
+                              </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="tipoPessoa" id="pessoaJuridica" value="pessoaJuridica" checked>
+                              <label class="form-check-label" for="pessoaJuridica">
+                                Pet Shop
+                              </label>
+                            </div>
+                          </div>
+                          <h4 class="mb-3">Informações de Pet Shop</h4>
+                          <div class="form-group">
+                              <label for="ptsnome">Nome do Petshop:</label>
+                              <input type="text" class="form-control" id="ptsnome" name="ptsnome" placeholder="Nome da Petshop" maxlength="65">
+                          </div>
+                          <div class="form-group">
+                              <label for="ptscnpj">CNPJ:</label>
+                              <input type="text" class="form-control" id="ptscnpj" name="ptscnpj" placeholder="CNPJ" required onkeydown="javascript: fMasc( this, mCNPJ );" maxlength="18">
+                          </div>
+                          <div class="form-group">
+                              <label for="ptscidade">Cidade:</label>
+                              <input type="text" class="form-control" name="ptscidade" id="ptscidade" placeholder="Cidade" maxlength="65">
+                          </div>
+                          <p>
+                            <div class="form-group">
+                              <label for="iestpts">Estado</label>
+                              <select name="ptsestado" id="iestpts" required>
+                                  <optgroup label="Região Norte">
+                                      <option value="AC">Acre</option>
+                                      <option value="AP">Amapá</option>
+                                      <option value="AM" selected>Amazonas</option>
+                                      <option value="PA">Pará</option>
+                                      <option value="RO">Rondônia</option>
+                                      <option value="RR">Roraima</option>
+                                      <option value="TO">Tocantins</option>
+                                  </optgroup>
+                                  <optgroup label="Região Nordeste">
+                                      <option value="AL">Alagoas</option>
+                                      <option value="BA">Bahia</option>
+                                      <option value="CE">Ceará</option>
+                                      <option value="MA">Maranhão</option>
+                                      <option value="PB">Paraíba</option>
+                                      <option value="PE">Pernambuco</option>
+                                      <option value="PI">Piauí</option>
+                                      <option value="RN">Rio Grande do Norte</option>
+                                      <option value="SE">Sergipe</option>
+                                  </optgroup>
+                                  <optgroup label="Região centro-oeste">
+                                      <option value="GO">Goiás</option>
+                                      <option value="MT">Mato Grosso</option>
+                                      <option value="MS">Mato Grosso do Sul</option>
+                                  </optgroup>
+                                  <optgroup label="Região Sudeste">
+                                      <option value="ES">Espírito Santo</option>
+                                      <option value="RJ">Rio de Janeiro</option>
+                                      <option value="MG">Minas Gerais</option>
+                                      <option value="SP">São Paulo</option>
+                                  </optgroup>
+                                  <optgroup label="Região Sul">
+                                      <option value="PR">Paraná</option>
+                                      <option value="RS">Rio Grande do Sul</option>
+                                      <option value="SC">Santa Catarina</option>
+                                  </optgroup>
+                              </select>
+                            </div>
+                          </p>
+                          <div class="form-group">
+                              <label for="ptsbairro">Bairro:</label>
+                              <input type="text" class="form-control" name="ptsbairro" id="ptsbairro" placeholder="Bairro" maxlength="65">
+                          </div>
+                          <div class="form-group">
+                              <label for="ptsrua">Rua:</label>
+                              <input type="text" class="form-control" id="ptsrua" name="ptsrua" placeholder="Rua" maxlength="65">
+                          </div>
+                          <div class="form-group">
+                              <label for="ptsnumero">Número:</label>
+                              <input type="number" class="form-control" name="ptsnumero" id="ptsnumero" placeholder="Número">
+                          </div>
+                          <div class="form-group">
+                              <label for="ptstelefone">Telefone:</label>
+                              <input type="tel" class="form-control" name="ptstelefone" id="ptstelefone" placeholder="Telefone" required onkeydown="javascript: fMasc( this, mTel );" maxlength="14">
+                          </div>
+                          <button type="submit" class="btn primaria btn-block mt-4">Enviar</button>
+                        </form>
+                      </div>                                                      
+                      <!-- Fim pessoa jurídica -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>      
+{% endblock content %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block titulo %}Detalhe{% endblock %}
+{% block content %}
+{% load static %}
+        <div class="container-fluid detalhes">
+            <div class="row g-4 mb-5 ">
+                <div class="col-lg-6 d-flex justify-content-center align-items-center"
+                hx-get="../fotopet/{{pet.petid}}/1"
+                hx-target="#fotopet{{pet.petid}}"
+                hx-trigger="load">
+                <div class="fruite-img" id="fotopet{{pet.petid}}">
+                
+                </div>
+                </div>
+                <div class="col-lg-6 mt-5">
+                    <h4>{{ pet.petnome }}</h4>
+                    <p class="mb-500">{{pet.pet_tipo_pttid.pttnome}}</p>
+                    <h5> Destalhes:</h5>
+                    <p class="mb-1">Sexo: {{pet.petsexo}}</p>
+                    <p class="mb-1">Raça: {{pet.pet_raca_ptrid.ptrnome}}</p>
+                    <p class="mb-1">Peso: {{pet.petpeso}}</p>
+                    <p class="mb-1">Porte: {{pet.pet_porte_ptpid.ptpnome}}: {{pet.pet_porte_ptpid.ptpdescricao}}</p>
+                    {% if petmes %}
+                        <p class="mb-1">Idade: {{petmes}} meses</p>
+                    {% else %}
+                        <p class="mb-1">Idade: {{petidade}} anos</p>
+                    {% endif %}
+                    <p class="mb-1">Castrado: {{pet.petcastrado}}</p>
+                    {% if pet.pessoa_pesid != None %}
+                    <p class="text-secondary mb-1">{{pet.pessoa_pesid.pesrua}}, {{pet.pessoa_pesid.pesnumero}}, {{pet.pessoa_pesid.pesbairro}}. {{pet.pessoa_pesid.pescidade}} - AM</p>
+                    {% endif %}
+                    <!-- <p class="mb-4">Susp endisse ultricies nisi vel quam suscipit. Sabertooth peacock flounder; chain pickerel hatchetfish, pencilfish snailfish</p> -->
+                    <div class="text-center">
+                        <a href="{% url 'adocao' %}" class="btn secundaria btn-block rounded px-3"> Voltar</a>
+                        <button
+                            type="button"
+                            class="btn primaria"
+                            data-bs-toggle="modal"
+                            data-bs-target="#exampleModal"
+                            data-bs-whatever="92991681228"
+                        >Entrar em contato</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div
+        class="modal fade"
+        id="exampleModal"
+        tabindex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Entre em Contato</h1>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="recipient-name" class="col-form-label">Destinatário:</label>
+                                <input type="text" class="form-control" id="recipient-name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="message-text" class="col-form-label">Mensagem:</label>
+                                <textarea class="form-control" id="message-text"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="button" class="btn btn-primary">Enviar mensagem</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}
