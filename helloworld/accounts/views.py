@@ -14,6 +14,7 @@ from django.contrib import messages
 import re
 from django.contrib.auth.decorators import login_required
 from adocao.models import *
+from adocao.views import *
 
 #View para ativar a conta pelo link enviado no e-mail, é chamado pelo account_activate_email.html
 def activate(request, uidb64, token):
@@ -86,7 +87,7 @@ def cadastro_user(request):
                     elif tipoPessoa == 'ong':
                         user.groups.add(2)
                     elif tipoPessoa == 'pessoaJuridica':
-                        user.groups.add(2)
+                        user.groups.add(3)
                     #Salvando usuário
                     user.save()
                 except Exception as  erro:
@@ -112,17 +113,14 @@ def cadastro_user(request):
 #View para cadastrar dados de usuário no banco
 login_required(login_url="/accounts/login")
 def cadastro_dados(request):
-    tipoPessoa = request.user.groups.first()
-    print('tipo pessoa', tipoPessoa)
+    tipoPessoa = str(request.user.groups.first())
     cursor = connection.cursor()
     #Verificação do método de acesso
     if request.method == 'GET':
-        return render(request, 'cadastro_tudo.html')
+        return render(request, 'cadastro_tudo.html', {'tipoPessoa': tipoPessoa})
     else:
         #tipoPessoa = request.POST.get('tipoPessoa')
-        
-        #Verificação do tipo de cadastro
-        if tipoPessoa == 'pessoaFisica':
+        if tipoPessoa == 'Pessoa':
             #Declaração de variáveis do tipo pessoa física
             pescpf = request.POST.get('pescpf')
             pescpf = re.sub('[^0-9]', '', pescpf)
@@ -158,8 +156,8 @@ def cadastro_dados(request):
                 return render(request, 'cadastro_tudo.html')
             finally:
                 cursor.close()
-                
-        elif tipoPessoa == 'ong':
+        #Tipo Ong
+        elif tipoPessoa == 'Ong':
             #Inserir ong no banco
             nomeONG = request.POST.get('nomeONG')
             cidadeONG = request.POST.get('cidadeONG')
@@ -175,7 +173,6 @@ def cadastro_dados(request):
             first_name = nomeONG
             request.user.first_name = first_name
             request.user.save()
-
             try:
                 ant_ong = Ong.objects.filter(ongemail = emailONG).first()
                 #Verificar se inserir ou alterar ong
@@ -198,8 +195,8 @@ def cadastro_dados(request):
                 return render(request, 'cadastro_tudo.html')
             finally:
                 cursor.close()
-            
-        elif tipoPessoa == 'pessoaJuridica':
+        #Tipo Pet shop   
+        elif tipoPessoa == 'Pet shop':
             ptsnome = request.POST.get('ptsnome')
             ptscnpj = request.POST.get('ptscnpj')
             ptscnpj = re.sub('[^0-9]', '', ptscnpj)
@@ -303,7 +300,6 @@ def password_reset(request):
 def password_reset_done(request):
     return render(request, 'password_reset_done.html')
 
-
 def password_reset_confirm(request, uidb64, token):
     if request.method == 'POST':
         User = get_user_model()
@@ -333,7 +329,7 @@ def password_reset_confirm(request, uidb64, token):
             return redirect("password_reset")
     else: 
         return render(request, 'password_reset_confirm.html')
-    
+   
 def reset_complete(request):
     return render(request, 'password_reset_complete.html')
 
@@ -417,4 +413,13 @@ def atualizar_ong(request, ongid):
             print('Erro: ', erro)
             messages.error(request, 'Erro ao atualizar dados!')
     return redirect('index')
+
+@login_required(login_url="/accounts/login")
+def adicionarpet(request):
+    if str(request.user.groups.first()) != 'Pessoa':
+        messages.error(request, 'Tipo de usuário não autorizado para cadastrar pets!')
+        return redirect(index)
+    pettipos = PetTipo.objects.all()
+    petportes = PetPorte.objects.all()
+    return render(request, "adicionarpet.html", {"pettipos": pettipos, "petportes": petportes})
     
