@@ -8,6 +8,10 @@ from django.db import connection
 from django.contrib import messages
 from helloworld.context_processors import *
 from accounts.views import cadastro_dados 
+from accounts.views import usuario, ong
+from datetime import datetime
+from django.http import JsonResponse
+from django.db.models import Sum, Count
 
 def index(request):
     return render(request, 'index.html')
@@ -19,14 +23,14 @@ def adocao(request):
     pettipos = PetTipo.objects.all()
     pessoas = Pessoa.objects.all()
     if nomePesquisa:
-        pets = Pet.objects.filter(petnome__icontains=nomePesquisa, pessoa_pesid = None)
+        pets = Pet.objects.filter(petnome__icontains=nomePesquisa, petadocoes__adostatus = 'Aguardando',petadocoes__isnull=False)
     elif especie:
         if raca:
-            pets = Pet.objects.filter(pet_raca_ptrid = raca, pessoa_pesid = None)
+            pets = Pet.objects.filter(pet_raca_ptrid = raca, petadocoes__isnull=False, petadocoes__adostatus = 'Aguardando')
         else:
-            pets = Pet.objects.filter(pet_tipo_pttid = especie, pessoa_pesid = None)
+            pets = Pet.objects.filter(pet_tipo_pttid = especie, petadocoes__isnull=False, petadocoes__adostatus = 'Aguardando')   
     else:
-        pets = Pet.objects.all().filter(pessoa_pesid = None)
+        pets = Pet.objects.filter(petadocoes__isnull=False, petadocoes__adostatus = 'Aguardando')
     pftfotos = PetFoto.objects.all()
     return render(request, 'adocao.html', {'pets': pets, 'pettipos': pettipos, 'pftfotos': pftfotos, "pessoas": pessoas, "especie": especie, "raca": raca, "nomePesquisa": nomePesquisa})
 
@@ -39,27 +43,36 @@ def load_pets(request):
     especie = request.GET.get('especie')
     raca = request.GET.get('raca')  
     if raca:
-        pets = Pet.objects.filter(pet_raca_ptrid = raca)
+        pets = Pet.objects.filter(pet_raca_ptrid = raca, petadocoes__isnull=False, petadocoes__adostatus = 'Aguardando')
     elif especie:
-        pets = Pet.objects.filter(pet_tipo_pttid = especie)
+        pets = Pet.objects.filter(pet_tipo_pttid = especie, petadocoes__isnull=False, petadocoes__adostatus = 'Aguardando')
     else:
-        pets = Pet.objects.all()
+        pets = Pet.objects.all().filter(petadocoes__isnull=False, petadocoes__adostatus = 'Aguardando')
     pftfotos = PetFoto.objects.all()
     return render(request, "load_pets.html", {"pets": pets, "raca": raca, "pftfotos": pftfotos, "especie": especie})
 
 @login_required(login_url="/accounts/login")
 def petdetalhe(request, petid):
-    pet = Pet.objects.filter(petid = petid).first()
-    today = date.today()
-    petidade = today.year - pet.petdtnascto.year - ((today.month, today.day) < (pet.petdtnascto.month, pet.petdtnascto.day))
-    pftfotos = PetFoto.objects.filter(pet_petid = pet.petid)
-    if petidade < 1:
-        if pet.petdtnascto.month > today.month:
-            petmes = 12 - pet.petdtnascto.month + today.month - (today.day < pet.petdtnascto.day)
-        else:
-            petmes = today.month - pet.petdtnascto.month - (today.day < pet.petdtnascto.day)
-        return render(request, "pagDetalheAdocao.html", {"pet": pet, "petid": petid, "pftfotos": pftfotos, "petmes": petmes})
-    return render(request, "pagDetalheAdocao.html", {"pet": pet, "petid": petid, "pftfotos": pftfotos, "petidade": petidade})
+    if str(request.user.groups.first()) == 'Pessoa':
+        pessoa = Pessoa.objects.filter(pesemail = request.user.email).first()
+        pet = Pet.objects.filter(petid = petid).first()
+        petadocao = PetAdocao.objects.filter(pet_petid=pet.petid).first()
+        today = date.today()
+        petidade = today.year - pet.petdtnascto.year - ((today.month, today.day) < (pet.petdtnascto.month, pet.petdtnascto.day))
+        pftfotos = PetFoto.objects.filter(pet_petid = pet.petid)
+        if petidade < 1:
+            if pet.petdtnascto.month > today.month:
+                petmes = 12 - pet.petdtnascto.month + today.month - (today.day < pet.petdtnascto.day)
+            else:
+                petmes = today.month - pet.petdtnascto.month - (today.day < pet.petdtnascto.day)
+            if petmes < 1:
+                petdia = today.day - pet.petdtnascto.day
+                return render(request, "pagDetalheAdocao.html", {"pet": pet, "petid": petid, "pftfotos": pftfotos, "petdia": petdia, 'petadocao': petadocao, 'pessoa': pessoa})
+            return render(request, "pagDetalheAdocao.html", {"pet": pet, "petid": petid, "pftfotos": pftfotos, "petmes": petmes, 'petadocao': petadocao, 'pessoa': pessoa})
+        return render(request, "pagDetalheAdocao.html", {"pet": pet, "petid": petid, "pftfotos": pftfotos, "petidade": petidade, 'petadocao': petadocao, 'pessoa': pessoa})
+    else:
+        messages.error(request, 'Usuário deve ser uma pessoa!')
+        return render(request, 'index.html')
     
 class fotopet(View):
     def get(self, request, petid, multiplo):
@@ -106,9 +119,10 @@ def salvarpet(request):
     if str(request.user.groups.all()[0]) == 'Pessoa':
         pessoa_pesid = Pessoa.objects.filter(pesemail = request.user.email).first().pesid
         try:
+
             cursor.execute('call sp_inserepet (%(nome)s, %(sexo)s, %(castrado)s, %(dtnascto)s, %(peso)s, %(pessoa)s, %(porte)s, %(raca)s, %(tipo)s)', {'nome': petnome, 'sexo': petsexo, 'castrado': petcastrado, 'dtnascto': petdtnascto, 'peso': petpeso, 'pessoa': pessoa_pesid, 'porte': vpet_porte_ptpid, 'raca': vpet_raca_ptrid, 'tipo': vpet_tipo_pttid})
         except Exception as erro:
-            print(erro)
+            print('Erro: ', erro)
             messages.error(request, 'Erro ao cadastrar pet!')
             return redirect(cadastropet)
         finally:
@@ -116,12 +130,13 @@ def salvarpet(request):
     elif str(request.user.groups.all()[0]) == 'Ong':
         try:
             ong = Ong.objects.filter(ongemail = request.user.email).first()
-            print(ong)
             Pet.objects.create(petnome = petnome, petsexo = petsexo, petcastrado = petcastrado, petdtnascto = petdtnascto, petpeso = petpeso, pet_porte_ptpid = porte, pet_raca_ptrid = raca, pet_tipo_pttid = tipo)
-            idpet = Pet.objects.order_by('-petid')[0]
-            PetAdocao.objects.create(ong_ongid = ong, pet_petid = idpet)
+            # cursor.execute('call sp_inserepet (%(nome)s, %(sexo)s, %(castrado)s, %(dtnascto)s, %(peso)s, %(pessoa)s, %(porte)s, %(raca)s, %(tipo)s)', {'nome': petnome, 'sexo': petsexo, 'castrado': petcastrado, 'dtnascto': petdtnascto, 'peso': petpeso, 'pessoa': 0, 'porte': vpet_porte_ptpid, 'raca': vpet_raca_ptrid, 'tipo': vpet_tipo_pttid})
+            idpet = Pet.objects.last()
+            # idpet = Pet.objects.order_by('-petid')[0]
+            PetAdocao.objects.create(ong_ongid = ong, pet_petid = idpet, adostatus = 'Aguardando')
         except Exception as erro:
-            print(erro)
+            print('Erro: ', erro)
             messages.error(request, 'Erro ao cadastrar pet!')
             return redirect(cadastropet)   
     else:
@@ -136,7 +151,7 @@ def salvarpet(request):
             petnovo = PetFoto(pftfoto = foto, pet_petid = petidnovo)
             petnovo.save()
     messages.success(request, 'Pet cadastrado com sucesso!')    
-    return redirect(adocao)
+    return redirect(index)
 
 def modalpet(request, petid):
     pettipos = PetTipo.objects.all()
@@ -159,7 +174,6 @@ def atualizarpet(request, petid):
     pet = Pet.objects.filter(petid = petid).first()
     try:
         cursor.execute('call sp_alterapet (%(nome)s, %(sexo)s, %(castrado)s, %(dtnascto)s, %(peso)s, %(pessoa)s, %(porte)s, %(raca)s, %(tipo)s, %(cod)s)', {'nome': petnome, 'sexo': petsexo, 'castrado': petcastrado, 'dtnascto': petdtnascto, 'peso': petpeso, 'pessoa': pessoa_pesid, 'porte': vpet_porte_ptpid, 'raca': vpet_raca_ptrid, 'tipo': vpet_tipo_pttid, 'cod': petid})
-        print(cursor)
     finally:
         cursor.close()
     # Removendo fotos antigas
@@ -175,16 +189,174 @@ def atualizarpet(request, petid):
     return redirect(adocao)
 
 def removerpet(request, petid):
-    pet = Pet.objects.filter(petid = petid).first()
-    # Removendo fotos antigas
+    cursor = connection.cursor()
     try:
+        # Removendo fotos antigas
         petfotoantigas = PetFoto.objects.filter(pet_petid_id = petid)
         for foto in petfotoantigas:
             foto.pftfoto.delete()
             foto.delete()
-        pet.delete()
+        cursor.execute('call sp_exclui_pet_adocao (%(cod)s)', {'cod': petid})
         messages.success(request, 'Pet removido com sucesso!')
     except Exception as erro:
         print(erro)
         messages.error(request, 'Erro ao remover pet!')
-    return redirect(adocao)
+    finally:
+        cursor.close()
+    return redirect(ong)
+
+def inicia_adocao(request, pesid, adoid):
+    petadocao = PetAdocao.objects.filter(adoid = adoid).first()
+    pessoa =  Pessoa.objects.filter(pesemail = request.user.email).first()
+    tentativa_feita = TentativaAdota.objects.filter(ttapes = pessoa.pesid, tta_petadocao__pet_petid__petid = petadocao.pet_petid.petid).first()
+    if tentativa_feita:
+        messages.error(request, 'Você já realizou uma solicitação para este pet!')
+        return redirect(adocao)
+    cursor = connection.cursor()
+    try:
+        cursor.execute('call sp_inicia_adocao (%(pessoa)s, %(adocao)s)', 
+            {
+                'pessoa': pesid, 
+                'adocao': adoid,
+            })
+        messages.success(request, 'Solicitado com sucesso!')
+    except Exception as erro:
+        print('erro: ', erro)
+        messages.error(request, 'Erro ao solicitar adoção!')
+        return redirect(adocao)
+    finally:
+        cursor.close()
+    return redirect(usuario)
+
+def altera_status_adocao_aceito(request, ttaid):
+    cursor = connection.cursor()
+    try:
+        cursor.execute('call sp_altera_status_adocao (%(cod)s, %(novo)s)', 
+            {
+                'cod': ttaid, 
+                'novo': 'Aceito',
+            })
+        messages.success(request, 'Aceito com sucesso!')
+    except Exception as erro:
+        print('erro: ', erro)
+        messages.error(request, 'Erro ao aceitar solicitação de adoção!')
+        return redirect(adocao)
+    finally:
+        cursor.close()
+    return redirect(ong)
+
+def altera_status_adocao_negado(request, ttaid):
+    cursor = connection.cursor()
+    try:
+        cursor.execute('call sp_altera_status_adocao (%(cod)s, %(novo)s)', 
+            {
+                'cod': ttaid, 
+                'novo': 'Negado',
+            })
+        messages.success(request, 'Negado com sucesso!')
+    except Exception as erro:
+        print('erro: ', erro)
+        messages.error(request, 'Erro ao negar solicitação de adoção!')
+        return redirect(adocao)
+    finally:
+        cursor.close()
+    return redirect(ong)
+
+def altera_status_adocao_adotado(request, ttaid):
+    cursor = connection.cursor()
+    try:
+        cursor.execute('call sp_altera_status_adocao (%(cod)s, %(novo)s)', 
+            {
+                'cod': ttaid, 
+                'novo': 'Adotado',
+            })
+        messages.success(request, 'Adoção concluída com sucesso!')
+    except Exception as erro:
+        print('erro: ', erro)
+        messages.error(request, 'Erro ao concluir adoção!')
+        return redirect(adocao)
+    finally:
+        cursor.close()
+    return redirect(ong)
+
+def altera_status_adocao_nao_adotado(request, ttaid):
+    cursor = connection.cursor()
+    try:
+        cursor.execute('call sp_altera_status_adocao (%(cod)s, %(novo)s)', 
+            {
+                'cod': ttaid, 
+                'novo': 'Não adotado',
+            })
+        messages.success(request, 'Adoção não aceita com sucesso!')
+    except Exception as erro:
+        print('erro: ', erro)
+        messages.error(request, 'Erro ao não aceitar adoção!')
+        return redirect(adocao)
+    finally:
+        cursor.close()
+    return redirect(ong)
+
+
+########################################## Dashboards Ong ##########################################
+@login_required(login_url="/accounts/login")
+def ong_relatorio_adocoes_concluidas(request):
+    if str(request.user.groups.first()) == 'Ong':
+        v_ong = Ong.objects.filter(ongemail = request.user.email).first()
+        #Adoções concluídas de ong logado
+        x = TentativaAdota.objects.filter(tta_petadocao__ong_ongid = v_ong, ttastatus = 'Adotado')
+        meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+        data = []
+        labels = []
+        mes = datetime.now().month + 1
+        ano = datetime.now().year
+        for i in range(12): 
+            mes -= 1
+            if mes == 0:
+                mes = 12
+                ano -= 1
+
+            count = 0
+            #Contando a quantidade de adoções para cada mês
+            for i in x:
+                if i.ttadthora.month == mes and i.ttadthora.year == ano:
+                    count += 1
+            labels.append(meses[mes-1])
+            data.append(count)
+        data_json = {'data': data[::-1], 'labels': labels[::-1]}
+        
+        return JsonResponse(data_json)
+    else:
+        messages.error(request, 'Usuário deve ser uma ong!')
+        return render(request, 'index.html')
+    
+
+@login_required(login_url="/accounts/login")
+def ong_relatorio_adocoes_concluidas_tipo(request):
+    if str(request.user.groups.first()) == 'Ong':
+        v_ong = Ong.objects.filter(ongemail = request.user.email).first()
+        #Adoções concluídas de ong logado
+        x = TentativaAdota.objects.filter(tta_petadocao__ong_ongid = v_ong, ttastatus = 'Adotado')
+        #Tipos de pets
+        tipos = PetTipo.objects.all()
+        label = []
+        data = []
+        for tipo in tipos:
+            adocoes = TentativaAdota.objects.filter(tta_petadocao__ong_ongid = v_ong, ttastatus = 'Adotado', tta_petadocao__pet_petid__pet_tipo_pttid = tipo).aggregate(Count('ttaid'))
+            if not adocoes['ttaid__count']:
+                adocoes['ttaid__count'] = 0
+            label.append(tipo.pttnome)
+            data.append(adocoes['ttaid__count'])
+        x = list(zip(label, data))
+        #Ordenar em ordem decrescente
+        x.sort(key=lambda x: x[1], reverse=True)
+        x = list(zip(*x))
+        return JsonResponse({'labels': x[0], 'data': x[1]})
+    else:
+        messages.error(request, 'Usuário deve ser uma ong!')
+        return render(request, 'index.html')
+    
+
+def retorna_total_adocoes(request):
+    total = TentativaAdota.objects.filter(ttastatus = 'Adotado').aggregate(Count('ttaid'))
+    if request.method == "GET":
+            return JsonResponse({'total': total['ttaid__count']})

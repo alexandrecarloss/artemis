@@ -1,6 +1,4 @@
-// Espera o documento estar pronto antes de executar o código
 $(document).ready(function () {
-
     // Fixed Navbar
     $(window).scroll(function () {
         if ($(window).width() < 992) {
@@ -36,13 +34,14 @@ $(document).ready(function () {
     });
 
     // Back to top button
-   $(window).scroll(function () {
-    if ($(this).scrollTop() > 300) {
-        $('.back-to-top').fadeIn('slow');
-    } else {
-        $('.back-to-top').fadeOut('slow');
-    }
+    $(window).scroll(function () {
+        if ($(this).scrollTop() > 300) {
+            $('.back-to-top').fadeIn('slow');
+        } else {
+            $('.back-to-top').fadeOut('slow');
+        }
     });
+
     $('.back-to-top').click(function () {
         $('html, body').animate({scrollTop: 0}, 1500, 'easeInOutExpo');
         return false;
@@ -123,9 +122,25 @@ $(document).ready(function () {
         $quantityInput.val(currentValue + 1);
     });
 
+    // Alterna campos com base na seleção de tipo de cadastro
+    document.querySelectorAll('input[name="tipoCadastro"]').forEach((input) => {
+        input.addEventListener('change', function () {
+            const tipo = this.value;
+            const camposProduto = document.getElementById('camposProduto');
+            const camposServico = document.getElementById('camposServico');
+            if (tipo === 'produto') {
+                camposProduto.style.display = 'block';
+                camposServico.style.display = 'none';
+            } else {
+                camposProduto.style.display = 'none';
+                camposServico.style.display = 'block';
+            }
+        });
+    });
+
 });
 
-
+// Função para toggle o formulário de endereço
 function toggleAddressForm() {
     const addressForm = document.getElementById('address-form');
     const savedAddress = document.getElementById('saved-address');
@@ -140,6 +155,37 @@ function toggleAddressForm() {
     }
 }
 
+// Função para toggle o formulário de pagamento
+function togglePaymentForm() {
+    const paymentForm = document.getElementById('payment-form');
+    const savedPayment = document.getElementById('saved-payment');
+    const isChecked = document.getElementById('Payment-1').checked;
+
+    if (isChecked) {
+        paymentForm.style.display = 'block';
+        savedPayment.style.display = 'none';
+    } else {
+        paymentForm.style.display = 'none';
+        savedPayment.style.display = 'block';
+    }
+}
+
+// Função para toggle o formulário de entrega
+function toggleDeliveryForm() {
+    const deliveryForm = document.getElementById('delivery-form');
+    const savedDelivery = document.getElementById('saved-delivery');
+    const isChecked = document.getElementById('Delivery-1').checked;
+
+    if (isChecked) {
+        deliveryForm.style.display = 'block';
+        savedDelivery.style.display = 'none';
+    } else {
+        deliveryForm.style.display = 'none';
+        savedDelivery.style.display = 'block';
+    }
+}
+
+// Função para uncheck os outros métodos de pagamento
 function uncheckOthers(selectedId) {
     const checkboxes = document.querySelectorAll('input[name="PaymentMethod"]');
     const cardInfo = document.getElementById('card-info');
@@ -151,79 +197,109 @@ function uncheckOthers(selectedId) {
         }
     });
 
-    if (selectedId === 'Card-1') {
+    if (selectedId === 'Card-1' || selectedId === 'Card-0') {
         showCardInfo = true;
     }
 
     cardInfo.style.display = showCardInfo ? 'block' : 'none';
 }
 
-
 document.addEventListener('DOMContentLoaded', function() {
     // Função para exibir o modal de confirmação
-    function showConfirmModal() {
-        // Verifica se o pagamento foi selecionado
+    window.showConfirmModal = function() {
         const isPaymentMethodSelected = document.querySelector('input[name="PaymentMethod"]:checked');
-        // Verifica se o endereço foi preenchido se a opção for marcada
         const isAddressFormVisible = document.getElementById('address-form').style.display === 'block';
         let isAddressValid = true;
-        let isCardInfoValid = true;
+        let errorMessage = '';
 
+        // Verifica se o método de pagamento foi selecionado
+        if (!isPaymentMethodSelected) {
+            errorMessage += 'Por favor, selecione um método de pagamento.<br>';
+        }
+
+        // Se o formulário de endereço está visível, valida os campos
         if (isAddressFormVisible) {
-            const addressFields = document.querySelectorAll('#address-form input[required]');
-            addressFields.forEach(field => {
-                if (field.value.trim() === '') {
+            const requiredFields = document.querySelectorAll('#address-form input[required]');
+            requiredFields.forEach(field => {
+                if (!field.value) {
                     isAddressValid = false;
                 }
             });
+            if (!isAddressValid) {
+                errorMessage += 'Por favor, preencha todos os campos do endereço.<br>';
+            }
         }
 
-        // Verifica se os campos do cartão estão preenchidos se a seção de cartão estiver visível
-        const isCardInfoVisible = document.getElementById('card-info').style.display === 'block';
-        if (isCardInfoVisible) {
-            const cardFields = document.querySelectorAll('#card-info input[required]');
-            cardFields.forEach(field => {
-                if (field.value.trim() === '') {
-                    isCardInfoValid = false;
-                }
-            });
-        }
-
-        if (!isPaymentMethodSelected) {
-            document.getElementById('error-message').innerText = 'Selecione um método de pagamento.';
-            document.getElementById('error-message').style.display = 'block';
-        } else if (!isAddressValid) {
-            document.getElementById('error-message').innerText = 'Preencha todos os campos do endereço.';
-            document.getElementById('error-message').style.display = 'block';
-        } else if (!isCardInfoValid) {
-            document.getElementById('error-message').innerText = 'Preencha todos os campos do cartão.';
-            document.getElementById('error-message').style.display = 'block';
+        if (errorMessage) {
+            const errorContainer = document.getElementById('error-message');
+            errorContainer.innerHTML = errorMessage;
+            errorContainer.style.display = 'block';
         } else {
-            // Se tudo estiver correto, exibe o modal de confirmação
             const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
             confirmModal.show();
         }
-    }
+    };
 
-    // Função para ocultar o modal de confirmação
-    function hideConfirmModal() {
+    
+    window.confirmOrder = function() {
+        document.getElementById('orderForm').submit();
+    };
+    
+    window.hideConfirmModal = function() {
         const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
         confirmModal.hide();
-    }
+    };
 
-    // Função para confirmar o pedido
-    function confirmOrder() {
-        // Aqui você pode adicionar o código para enviar o formulário ou realizar outra ação
-        alert('Pedido confirmado!');
-        hideConfirmModal();
-    }
+    window.toggleAddressForm = function() {
+        const addressForm = document.getElementById('address-form');
+        if (addressForm.style.display === 'none') {
+            addressForm.style.display = 'block';
+        } else {
+            addressForm.style.display = 'none';
+        }
+    };
+    
+    window.uncheckOthers = function(checkboxId) {
+        const checkboxes = document.querySelectorAll('input[name="PaymentMethod"]');
+        checkboxes.forEach(checkbox => {
+            if (checkbox.id !== checkboxId) {
+                checkbox.checked = false;
+            }
+        });
+    };
 
-    // Atribui as funções aos botões
-    document.querySelector('button[type="submit"]').addEventListener('click', function(event) {
-        event.preventDefault(); // Previne o envio do formulário
-        showConfirmModal();
+
+
+
+    // Código para as estrelas de avaliação
+    const stars = document.querySelectorAll('.rating .star');
+    const ratingValueInput = document.getElementById('ratingValue');
+
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            ratingValueInput.value = value;
+            updateStars(value);
+        });
+
+        star.addEventListener('mouseover', function() {
+            const value = this.getAttribute('data-value');
+            updateStars(value);
+        });
+
+        star.addEventListener('mouseout', function() {
+            const selectedValue = ratingValueInput.value;
+            updateStars(selectedValue);
+        });
     });
 
-    document.querySelector('#confirmModal .btn-secondary').addEventListener('click', hideConfirmModal);
-    document.querySelector('#confirmModal .btn-primary').addEventListener('click', confirmOrder);
+    function updateStars(value) {
+        stars.forEach(star => {
+            if (star.getAttribute('data-value') <= value) {
+                star.classList.add('selected');
+            } else {
+                star.classList.remove('selected');
+            }
+        });
+    }
 });

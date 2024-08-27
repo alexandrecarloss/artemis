@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block titulo %}Ong dados{% endblock %}
+{% block titulo %}Ong{% endblock %}
 {% block content %}
 {% for message in messages %}
     {% if message.tags == 'error' %}
@@ -20,8 +20,7 @@
                 <div class="list-group">
                     <a href="#" class="list-group-item list-group-item-action active" aria-current="true"
                         data-target="pets">Pets em Adoção</a>
-                    <a href="#" class="list-group-item list-group-item-action"
-                        data-target="agendamentos">Agendamentos</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-target="notificacoes">Notificações</a> <!-- Nova aba de Notificações -->
                     <a href="#" class="list-group-item list-group-item-action" data-target="configuracoes">Configurações
                         da Conta</a>
                     <!-- Adicione mais links conforme necessário -->
@@ -226,6 +225,10 @@ hx-trigger="load"
                                             </div>
                                             <button type="submit" class="btn primaria">Atualizar</button>
                                         </form>
+                                        <form action="{% url 'removerpet' pet.petid %}" method="post">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Remover Pet</button>
+                                        </form>
                                     </div>
                                 </div>                                   
                             </div>
@@ -252,36 +255,69 @@ hx-trigger="load"
                     </a>
                 </div>
 
-                <div class="card conteudo" id="agendamentos">
+                <div class="card conteudo" id="notificacoes">
                     <div class="card-body">
-                        <!-- Aqui você pode listar os agendamentos -->
-                        <p>Agendamentos aqui...</p>
+                        <h5 class="card-title mb-4">Notificações</h5>
+                        <ul class="list-group" style="max-height: 300px; overflow-y: auto;">
+                            {% for tentativa in tentativas_adocao %}
+                            <li class=" border-bottom">
+                                <h6>Adoção</h6>
+                                <p>Pet: {{ tentativa.tta_petadocao.pet_petid.petnome }}</p>
+                                <p>Pessoa: {{ tentativa.ttapes.pesnome }}</p>
+                                <p>Telefone da pessoa: {{ tentativa.ttapes.pesnumero }}</p>
+                                <p>E-mail da pessoa: {{ tentativa.ttapes.pesemail }}</p>
+                                <p>Ong: {{ tentativa.tta_petadocao.ong_ongid.ongnome }}</p>
+                                <p>Status: {{ tentativa.ttastatus }}</p>
+                                <span class="text-muted">Recebida em:{{ tentativa.ttadthora.date }} às {{ tentativa.ttadthora.time }}</span>
+                                {% if tentativa.ttastatus == "Requisitado" %}
+                                <form action="{% url 'altera_status_adocao_aceito' tentativa.ttaid %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary" id="next-btn">Aceitar</button>
+                                </form>
+                                <form action="{% url 'altera_status_adocao_negado' tentativa.ttaid %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger" id="next-btn">Negar requisição</button>
+                                </form>
+                                {% elif tentativa.ttastatus == "Aceito" %}
+                                <form action="{% url 'altera_status_adocao_adotado' tentativa.ttaid %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary" id="next-btn">Conceder adoção</button>
+                                </form>
+                                <form action="{% url 'altera_status_adocao_nao_adotado' tentativa.ttaid %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger" id="next-btn">Negar adoção</button>
+                                </form>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </div>
+                
                 <div class="card conteudo" id="configuracoes">
                     <div class="card-body">
                         <!-- Aqui você pode listar as configurações da conta --> 
                         
-                        <form action="{% url 'atualizar_ong' ong.ongid %}" method="post">
+                        <form action="{% url 'atualizar_ong' %}" method="post">
                             {% csrf_token %}                 
                         <!-- Início ONG -->
                         <h4 class="mb-3">Informações de ONG</h4>
                         <div class="form-group">
-                          <label for="nomeONG">Nome da ONG:</label>
-                          <input type="text" class="form-control" id="nomeONG" placeholder="Nome da ONG" required name="nomeONG" maxlength="65" value="{{ ong.ongnome }}">
+                          <label for="ongnome">Nome da ONG:</label>
+                          <input type="text" class="form-control" id="ongnome" placeholder="Nome da ONG" required name="ongnome" maxlength="65" value="{{ ong.ongnome }}">
                         </div>
                         <div class="form-group">
-                          <label for="cidadeONG">Cidade:</label>
-                          <input type="text" class="form-control" id="cidadeONG" name="cidadeONG" placeholder="Cidade" required maxlength="70" value="{{ ong.ongcidade }}">
+                          <label for="ongcidade">Cidade:</label>
+                          <input type="text" class="form-control" id="ongcidade" name="ongcidade" placeholder="Cidade" required maxlength="70" value="{{ ong.ongcidade }}">
                         </div>
                         <p>
                           <div class="form-group">
-                            <label for="iestong">Estado</label>
-                            <select name="ongestado" id="iestong" required>
+                            <label for="ongestado">Estado</label>
+                            <select name="ongestado" id="ongestado" required>
                                 <optgroup label="Região Norte">
                                     <option value="AC">Acre</option>
                                     <option value="AP">Amapá</option>
-                                    <option value="AM">Amazonas</option>
+                                    <option value="AM" selected>Amazonas</option>
                                     <option value="PA">Pará</option>
                                     <option value="RO">Rondônia</option>
                                     <option value="RR">Roraima</option>
@@ -318,29 +354,23 @@ hx-trigger="load"
                           </div>
                         </p>
                         <div class="form-group">
-                          <label for="bairroONG">Bairro:</label>
-                          <input type="text" class="form-control" name="bairroONG" id="bairroONG" placeholder="Bairro" required maxlength="70" value="{{ ong.ongbairro }}">
+                          <label for="ongbairro">Bairro:</label>
+                          <input type="text" class="form-control" name="ongbairro" id="ongbairro" placeholder="Bairro" required maxlength="70" value="{{ ong.ongbairro }}">
                         </div>
                         <div class="form-group">
-                          <label for="ruaONG">Rua:</label>
-                          <input type="text" class="form-control" id="ruaONG" name="ruaONG" required maxlength="70" value="{{ ong.ongrua }}">
+                          <label for="ongrua">Rua:</label>
+                          <input type="text" class="form-control" id="ongrua" name="ongrua" required maxlength="70" value="{{ ong.ongrua }}">
                         </div>
                         <div class="form-group">
-                          <label for="numONG">Número:</label>
-                          <input type="number" class="form-control" id="numONG" name="numONG" placeholder="Número" required">
+                          <label for="ongnumero">Número:</label>
+                          <input type="number" class="form-control" id="ongnumero" name="ongnumero" placeholder="Número" required value="{{ ong.ongnumero }}">
                         </div>
                         <div class="form-group">
-                          <label for="telefoneONG">Telefone:</label>
-                          <input type="tel" class="form-control" name="telefoneONG" id="telefoneONG" placeholder="Telefone" required onkeydown="javascript: fMasc( this, mTel );" maxlength="14" value="{{ ong.ongtelefone }}">
-                        </div>
-                        <div class="form-group">
-                          <label for="emailONG">Email:</label>
-                          <input type="email" class="form-control" name="emailONG" id="emailONG" placeholder="Email" value="{{ ong.ongemail }}">
+                          <label for="ongtelefone">Telefone:</label>
+                          <input type="tel" class="form-control" name="ongtelefone" id="ongtelefone" placeholder="Telefone" required onkeydown="javascript: fMasc( this, mTel );" maxlength="14" value="{{ ong.ongtelefone }}">
                         </div>
                         <button type="submit" class="btn primaria btn-block mt-4">Atualizar</button>
-                      </form>
-
-                            
+                      </form>                          
                     </div>
                 </div>
             </div>

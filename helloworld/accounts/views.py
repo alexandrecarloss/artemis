@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth import login as login_django, logout, authenticate, get_user_model
 from django.shortcuts import redirect
 from django.db import connection
@@ -66,12 +66,12 @@ def envia_email(request, user):
     return render(request, 'cadastro_user.html')          
 
 # View para cadastrar conta de usuário
-def cadastro_user(request):
+def cadastro_user(request):   
     if request.method == 'POST':
         #Verificação de confirmação de senha
         if(request.POST['password1'] == request.POST['password2']):
-            pesemail = request.POST.get('pesemail')
-            antuser = User.objects.filter(email=pesemail).first()
+            email = request.POST.get('email')
+            antuser = User.objects.filter(email=email).first()
             #Verificação se existe email cadastrado correspondente
             if(antuser):
                 messages.error(request, 'Usuário com esse e-mail já existe. Escolha um novo e-mail ou faça login neste.')
@@ -79,15 +79,19 @@ def cadastro_user(request):
             else:                   
                 #Cadastro para autenticação
                 try:
-                    user = User.objects.create_user(pesemail, password=request.POST['password1'], email=pesemail)
+                    user = User.objects.create_user(email, password=request.POST['password1'], email=email)
+                    criar_grupos_usuario_nao_encontrado()
+                    grupo_pessoa = Group.objects.filter(name = 'Pessoa').first()
+                    grupo_ong = Group.objects.filter(name = 'Ong').first()
+                    grupo_petshop = Group.objects.filter(name = 'Pet shop').first()
                     #Verificação do tipo de usuário
                     tipoPessoa = request.POST.get('tipoPessoa')
                     if tipoPessoa == 'pessoaFisica':
-                        user.groups.add(1)
+                        user.groups.add(grupo_pessoa)
                     elif tipoPessoa == 'ong':
-                        user.groups.add(2)
+                        user.groups.add(grupo_ong)
                     elif tipoPessoa == 'pessoaJuridica':
-                        user.groups.add(3)
+                        user.groups.add(grupo_petshop)
                     #Salvando usuário
                     user.save()
                 except Exception as  erro:
@@ -241,6 +245,7 @@ def cadastro_dados(request):
                 
 def logoutaccount(request):
     logout(request)
+    request.session['grupo_usuario'] = None
     return redirect('index')
 
 def loginaccount(request):
@@ -333,19 +338,48 @@ def password_reset_confirm(request, uidb64, token):
 def reset_complete(request):
     return render(request, 'password_reset_complete.html')
 
+#Classe para enviar a data de nascimento de pessoa formatada
+class data_nasc():
+    dia = ''
+    mes = ''
+    ano = ''
+    
 @login_required(login_url="/accounts/login")
 def usuario(request):
+    contexto = context_grupo_usuario(request)
+    if contexto['dado_usuario'] == None:
+        messages.error(request, 'Termine seu cadastro')
+        return redirect(cadastro_dados)
     #Obtém o usuário e seus dados associados de acordo com o e-mail autenticado
     pettipos = PetTipo.objects.all()
     petportes = PetPorte.objects.all()
-    pesid = Pessoa.objects.filter(pesemail = request.user.email).first().pesid
-    pets = Pet.objects.filter(pessoa_pesid = pesid)
-    pftfotos = PetFoto.objects.all()
     pessoa = Pessoa.objects.filter(pesemail = request.user.email).first()
-    return render(request, "petUsuario.html", {"pets": pets, "pftfotos": pftfotos, "pettipos": pettipos, "petportes": petportes, "pessoa": pessoa})
+    pets = Pet.objects.filter(pessoa_pesid = pessoa.pesid)
+    pftfotos = PetFoto.objects.all()
+    #Envia a data de nascimento com formato adequado para preencher o value date
+    nascimento = data_nasc()
+
+    nascimento.dia = pessoa.pesdtnascto.day
+    if pessoa.pesdtnascto.day < 10:
+        nascimento.dia = f'0{pessoa.pesdtnascto.day}'
+    nascimento.mes = pessoa.pesdtnascto.month
+    if pessoa.pesdtnascto.month < 10:
+        nascimento.mes = f'0{pessoa.pesdtnascto.month}'
+    nascimento.ano = pessoa.pesdtnascto.year 
+    vendas = Venda.objects.filter(venpessoa_pesid = pessoa.pesid).order_by('-vendthora')
+    total_compras = 0
+    for venda in vendas:
+        total_compras += venda.venvalor
+    solicitacoes = Solicita.objects.filter(pessoa_pesid = pessoa.pesid)
+    tentativas_adocao = TentativaAdota.objects.filter(ttapes = pessoa.pesid)
+    return render(request, "petUsuario.html", {"pets": pets, "pftfotos": pftfotos, "pettipos": pettipos, "petportes": petportes, "pessoa": pessoa, 'nascimento': nascimento, 'vendas': vendas, 'total_compras': total_compras, 'solicitacoes': solicitacoes, 'tentativas_adocao': tentativas_adocao})
 
 @login_required(login_url="/accounts/login")
 def ong(request):
+    contexto = context_grupo_usuario(request)
+    if contexto['dado_usuario'] == None:
+        messages.error(request, 'Termine seu cadastro')
+        return redirect(cadastro_dados)
     pets = []
     pettipos = PetTipo.objects.all()
     petportes = PetPorte.objects.all()
@@ -356,63 +390,75 @@ def ong(request):
     for adocao in pets_adocao:
         pet = Pet.objects.filter(petid = adocao.pet_petid.petid).first()
         pets.append(pet)
-    return render(request, 'pagOng.html', {'pets': pets, 'pettipos': pettipos, 'petportes': petportes, 'ong': ong})
+    tentativas_adocao = TentativaAdota.objects.filter(tta_petadocao__ong_ongid = ong.ongid)
+    return render(request, 'pagOng.html', {'pets': pets, 'pettipos': pettipos, 'petportes': petportes, 'ong': ong, 'tentativas_adocao': tentativas_adocao})
 
-def atualizar_pessoa(request, pesid):
-    if request.method == 'POST':
-        try:
-            #Atualização na tabela pessoa
-            pessoa = Pessoa.objects.filter(pesid = pesid).first()
-            user = User.objects.filter(email = pessoa.pesemail).first()
-            pessoa.pescpf = request.POST.get('pescpf')
-            pessoa.pescpf = re.sub('[^a-zA-Z0-9]', '', pessoa.pescpf)
-            pessoa.pesdtnascto = request.POST.get('pesdtnascto')
-            pessoa.pessexo = request.POST.get('pessexo')
-            pessoa.pescidade = request.POST.get('pescidade')
-            pessoa.pesbairro = request.POST.get('pesbairro')
-            pessoa.pesrua = request.POST.get('pesrua')
-            pessoa.pesemail = request.POST.get('pesemail')
-            pessoa.pesnumero = request.POST.get('pesnumero')
-            pessoa.pestelefone = request.POST.get('pestelefone')
-            pessoa.pestelefone = re.sub('[^a-zA-Z0-9]', '', pessoa.pestelefone)
-            pessoa.pesnome = request.POST.get('pesnome')
-            pessoa.pesestado = request.POST.get('pesestado')
-            pessoa.save()
-            #Atualização na tabela usuário
-            user.username = pessoa.pesemail
-            user.email = pessoa.pesemail
-            user.save()
-            messages.success(request, 'Dados atualizados com sucesso!')
-        except Exception as erro:
-            print('Erro: ', erro)
-            messages.error(request, 'Erro ao atualizar dados!')
-    return redirect('index')
+def atualizar_pessoa(request):
+    if str(request.user.groups.first()) == 'Pessoa':
+        if request.method == 'POST':     
+            cursor = connection.cursor()
+            try:
+                #Atualização na tabela Pessoa e User relacionado
+                email = request.user.email
+                v_pessoa = Pessoa.objects.filter(pesemail = request.user.email).first()
+                cpf = request.POST.get('pescpf')
+                cpf = re.sub('[^0-9]', '', cpf)
+                dtnascto = request.POST.get('pesdtnascto')
+                sexo = request.POST.get('pessexo')
+                cidade = request.POST.get('pescidade')
+                bairro = request.POST.get('pesbairro')
+                rua = request.POST.get('pesrua')
+                numero = request.POST.get('pesnumero')
+                telefone = request.POST.get('pestelefone')
+                telefone = re.sub('[^0-9]', '', telefone)
+                nome = request.POST.get('pesnome')
+                estado = request.POST.get('pesestado')
+                cod = v_pessoa.pesid
+                # Procedimento para atualizar pessoa
+                cursor.execute('call sp_alterapessoa (%(cpf)s, %(dtnascto)s, %(sexo)s, %(cidade)s, %(bairro)s, %(rua)s, %(email)s, %(numero)s, %(telefone)s, %(nome)s, %(estado)s, %(cod)s)', {'cpf': cpf, 'dtnascto': dtnascto, 'sexo': sexo, 'cidade': cidade, 'bairro': bairro, 'rua': rua, 'email': email, 'numero': numero, 'telefone': telefone, 'nome': nome, 'estado': estado, 'cod': cod})
+            except Exception as erro:
+                print(erro)
+                messages.error(request, 'Erro ao atualizar dados!')
+                return redirect(usuario)
+            finally:
+                cursor.close()
+                messages.success(request, 'Dados atualizados com sucesso!')             
+        return redirect(usuario)
+    else:
+        messages.error(request, 'Usuário deve ser uma Pessoa física!')
+        return render(request, 'index.html')
+        
 
-def atualizar_ong(request, ongid):
-    if request.method == 'POST':
-        try:
-            #Atualização na tabela ong
-            ong = Ong.objects.filter(ongid = ongid).first()
-            user = User.objects.filter(email = ong.ongemail).first()
-            ong.ongnome = request.POST.get('nomeONG')
-            ong.ongcidade = request.POST.get('cidadeONG')
-            ong.ongbairro = request.POST.get('bairroONG')
-            ong.ongrua = request.POST.get('ruaONG')
-            ong.ongnum = request.POST.get('numONG')
-            telefoneONG = request.POST.get('telefoneONG')
-            ong.ongtelefone = re.sub('[^a-zA-Z0-9]', '', telefoneONG)
-            ong.ongemail = request.POST.get('emailONG')
-            ong.ongestado = request.POST.get('ongestado')
-            ong.save()
-            #Atualização na tabela usuário
-            user.username = ong.ongemail
-            user.email = ong.ongemail
-            user.save()
-            messages.success(request, 'Dados atualizados com sucesso!')
-        except Exception as erro:
-            print('Erro: ', erro)
-            messages.error(request, 'Erro ao atualizar dados!')
-    return redirect('index')
+def atualizar_ong(request):
+    if str(request.user.groups.first()) == 'Ong':
+        if request.method == 'POST':
+            cursor = connection.cursor()
+            try:
+                #Atualização na tabela Ong e User relacionado
+                ongemail = request.user.email
+                v_ong = Ong.objects.filter(ongemail = request.user.email).first()
+                nome = request.POST.get('ongnome')
+                estado = request.POST.get('ongestado')
+                cidade = request.POST.get('ongcidade')
+                bairro = request.POST.get('ongbairro')
+                rua = request.POST.get('ongrua')
+                numero = request.POST.get('ongnumero')
+                ongtelefone = request.POST.get('ongtelefone')
+                telefone = re.sub('[^0-9]', '', ongtelefone)
+                cod = v_ong.ongid
+                # Procedimento para atualizar ong
+                cursor.execute('call sp_alteraong (%(nome)s, %(estado)s, %(cidade)s, %(bairro)s, %(rua)s, %(email)s, %(numero)s, %(telefone)s, %(cod)s)', {'nome': nome, 'estado': estado, 'cidade': cidade, 'bairro': bairro, 'rua': rua, 'email': ongemail, 'numero': numero, 'telefone': telefone, 'cod': cod})
+            except Exception as erro:
+                print(erro)
+                messages.error(request, 'Erro ao atualizar dados!')
+                return redirect(ong)
+            finally:
+                cursor.close()
+                messages.success(request, 'Dados atualizados com sucesso!')             
+        return redirect('index')
+    else:
+        messages.error(request, 'Usuário deve ser uma Ong!')
+        return render(request, 'index.html')
 
 @login_required(login_url="/accounts/login")
 def adicionarpet(request):
@@ -423,3 +469,63 @@ def adicionarpet(request):
     petportes = PetPorte.objects.all()
     return render(request, "adicionarpet.html", {"pettipos": pettipos, "petportes": petportes})
     
+def criar_grupos_usuario_nao_encontrado():
+    # Cria os grupos de tipos usuarios que não existem
+    pessoa = Group.objects.filter(name = 'Pessoa').first()
+    if not pessoa:
+        Group.objects.create(name = 'Pessoa')
+    ong = Group.objects.filter(name = 'Ong').first()
+    if not ong:
+        Group.objects.create(name = 'Ong')
+    petshop = Group.objects.filter(name = 'Pet shop').first()
+    if not petshop:
+        Group.objects.create(name = 'Pet shop')
+
+
+def petshop(request):
+    contexto = context_grupo_usuario(request)
+    if contexto['dado_usuario'] == None:
+        messages.error(request, 'Termine seu cadastro')
+        return redirect(cadastro_dados)
+    contexto = context_grupo_usuario(request)
+    if contexto['dado_usuario'] == None:
+        messages.error(request, 'Termine seu cadastro')
+        return redirect(cadastro_dados)
+    petshop = Petshop.objects.filter(ptsemail = request.user.email).first()
+    produtos = Produto.objects.filter(propetshop_ptsid = petshop.ptsid)
+    servicos = Servico.objects.filter(petshop_ptsid = petshop.ptsid)
+    solicitacoes = Solicita.objects.filter(servico_serid__petshop_ptsid = petshop.ptsid)
+    vendas = Venda.objects.filter(venpro__propetshop_ptsid__ptsid = petshop.ptsid).order_by('-vendthora')
+    return render(request, 'pagPetshop.html', {'produtos': produtos, 'petshop': petshop, 'servicos': servicos, 'solicitacoes': solicitacoes, 'vendas': vendas})
+
+def atualizar_petshop(request):
+    if str(request.user.groups.first()) == 'Pet shop':
+        if request.method == 'POST':
+            cursor = connection.cursor()
+            try:
+                #Atualização na tabela Petshop e User relacionado       
+                email = request.user.email
+                v_petshop = Petshop.objects.filter(ptsemail = request.user.email).first()
+                nome = request.POST.get('ptsnome')
+                cnpj = request.POST.get('ptscnpj')
+                estado = request.POST.get('ptsestado')
+                cidade = request.POST.get('ptscidade')
+                bairro = request.POST.get('ptsbairro')
+                rua = request.POST.get('ptsrua')
+                numero = request.POST.get('ptsnumero')
+                ptstelefone = request.POST.get('ptstelefone')
+                telefone = re.sub('[^0-9]', '', ptstelefone)
+                cod = v_petshop.ptsid
+                #Procedimento para atualizar petshop
+                cursor.execute('call sp_alterapetshop (%(nome)s, %(cnpj)s, %(estado)s, %(cidade)s, %(bairro)s, %(rua)s, %(email)s, %(numero)s, %(telefone)s, %(cod)s)', {'nome': nome, 'cnpj': cnpj, 'estado': estado, 'cidade': cidade, 'bairro': bairro, 'rua': rua, 'email': email, 'numero': numero, 'telefone': telefone, 'cod': cod})
+            except Exception as erro:
+                print(erro)
+                messages.error(request, 'Erro ao atualizar dados!')
+                return redirect(petshop)
+            finally:
+                cursor.close()
+                messages.success(request, 'Dados atualizados com sucesso!')        
+        return redirect(petshop)
+    else:
+        messages.error(request, 'Usuário deve ser uma loja Pet shop!')
+        return render(request, 'index.html')

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block titulo %}Detalhes do produto {% endblock %}
+{% block content %}
+{% load static %}
+{% for message in messages %}
+{% if message.tags == 'error' %}
+<div class="alert alert-danger mt-3" role="alert">
+    {{message}}
+</div>
+{% else %}
+<div class="alert alert-{{message.tags}}">
+    {{message}}
+</div>
+{% endif %}
+{% endfor %}
+
+<div class="container-fluid">
+    <div class="container py-5">
+        <div class="row g-4 mb-5">
+            <div class="col-lg-8 col-xl-9">
+                <div class="row g-4">
+                    <!-- IMAGEM DO PRODUTO -->
+                    <div class="col-lg-6" hx-get="../../fotoproduto/{{ produto.proid }}/1"
+                        hx-target="#fotoproduto{{ produto.proid }}" hx-trigger="load">
+                        <div class="fruite-img" id="fotoproduto{{ produto.proid }}">
+
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <h4 class="fw-bold mb-3">{{ produto.pronome }}</h4>
+                        <p class="mb-3">Categoria: {{ produto.categoria_produto_ctpid }}</p>
+                        <p class="mb-4">Estoque: {{ produto.prosaldo }}</p>
+                        <div class="d-flex mb-4">
+                        {% if media_avaliacoes == 0 %}
+                            <i class="fa fa-star text-secondary"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                        {% elif media_avaliacoes == 1 %}
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                        {% elif media_avaliacoes == 2 %}
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                        {% elif media_avaliacoes == 3 %}
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                        {% elif media_avaliacoes == 4 %}
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star text-secondary"></i>
+                        {% elif media_avaliacoes == 5 %}
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                        {% else %}
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                        {% endif %}
+                        </div>
+                        <h5 class="fw-bold mb-3">R$ {{ produto.propreco }}</h5>
+                        <p class="mb-4">Descrição: {{ produto.categoria_produto_ctpid.ctpdescricao }}</p>
+                        <form action="{% url 'form_altera_produto' produto.proid %}" method="POST">
+                            {% csrf_token %}
+                            <div class="input-group quantity mb-5">                              
+                                <p>Estoque: {{ produto.prosaldo }}</p> 
+                            </div>
+                            <button type="submit" class="btn primaria btn-block mt-4">
+                                Alterar produto
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-lg-12">
+                        <nav>
+                            <div class="nav nav-tabs mb-3">
+                                <button class="nav-link active border-white border-bottom-0" type="button" role="tab"
+                                    id="nav-about-tab" data-bs-toggle="tab" data-bs-target="#nav-about"
+                                    aria-controls="nav-about" aria-selected="true">Descrição</button>
+                                <button class="nav-link border-white border-bottom-0" type="button" role="tab"
+                                    id="nav-mission-tab" data-bs-toggle="tab" data-bs-target="#nav-mission"
+                                    aria-controls="nav-mission" aria-selected="false">Avaliações</button>
+                            </div>
+                        </nav>
+                        <div class="tab-content mb-5">
+                            <div class="tab-pane active" id="nav-about" role="tabpanel" aria-labelledby="nav-about-tab">
+                                <p>Pet shop {{ produto.propetshop_ptsid.ptsnome }} </p>
+                                <p>Rua: {{ produto.propetshop_ptsid.ptsrua }}</p>
+                                <p>Bairro: {{ produto.propetshop_ptsid.ptsbairro }}</p>
+                                <p>Cidade: {{ produto.propetshop_ptsid.ptscidade }}/{{ produto.propetshop_ptsid.ptsestado }}</p>
+
+                            </div>
+                            <div class="tab-pane" id="nav-mission" role="tabpanel" aria-labelledby="nav-mission-tab">
+                                {% for avaliacao in avaliacoes %}
+                                <div class="d-flex">
+                                    <div class="">
+                                        <p class="mb-2" style="font-size: 14px;">April 12, 2024</p>
+                                        <div class="d-flex justify-content-between">
+                                            <h5>{{ avaliacao.pessoa_pesid.pesnome }}</h5>
+                                            <div class="d-flex mb-3">
+                                                {% if avaliacao.avavalor == 0 %}
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                {% elif avaliacao.avavalor == 1 %}
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                {% elif avaliacao.avavalor == 2 %}
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                {% elif avaliacao.avavalor == 3 %}
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                {% elif avaliacao.avavalor == 4 %}
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star text-secondary"></i>
+                                                {% elif avaliacao.avavalor == 5 %}
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star"></i>
+                                                    <i class="fa fa-star"></i>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <p>{{ avaliacao.avadescricao }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            <div class="col-lg-4 col-xl-3">
+                <div class="row g-4 fruite">
+                    <div class="col-lg-12">
+                    </div>
+                    <!-- BANNER -->
+                    <div class="col-lg-12">
+                        <div class="position-relative">
+                            <img src="img/serviços.jpg" class="img-fluid w-100 rounded" alt="">
+                            <div class="position-absolute" style="top: 50%; right: 10px; transform: translateY(-50%);">
+                                <h3 class="text-white fw-bold">PRODUTOS <br> EM <br> PROMOÇÂO</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12">
+                        <div class="position-relative">
+                            <img src="img/serviços.jpg" class="img-fluid w-100 rounded" alt="">
+                            <div class="position-absolute" style="top: 50%; right: 10px; transform: translateY(-50%);">
+                                <h3 class="text-white fw-bold">PRODUTOS <br> EM <br> PROMOÇÂO</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

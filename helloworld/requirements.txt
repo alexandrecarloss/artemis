@@ -5,7 +5,6 @@ colorama==0.4.6
 defusedxml==0.7.1
 Django==5.0.3
 django-debug-toolbar==4.3.0
-django-filter==24.2
 djangorestframework==3.15.1
 httpie==3.2.2
 idna==3.7

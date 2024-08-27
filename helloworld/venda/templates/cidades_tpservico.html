@@ -1,0 +1,12 @@
+<option value="">Selecione uma cidade</option>
+<div hx-get="load_petshop_cidade/"  
+hx-params="tipo_servico"                            
+hx-target="#petshop_cidade"
+hx-trigger="load"
+></div>
+
+{% for cidade in cidades_tpservico %}
+<option value="{{ cidade }}">{{ cidade }}</option>
+{% endfor %}
+
+

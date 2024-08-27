@@ -10,6 +10,9 @@ admin.site.register(Petshop)
 admin.site.register(Ong)
 admin.site.register(PetAdocao)
 admin.site.register(Produto)
+admin.site.register(Solicita)
+admin.site.register(Venda)
+admin.site.register(CategoriaProduto)
 
 
 # Register your models here.

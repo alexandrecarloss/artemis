@@ -17,8 +17,6 @@
                             {{message}}
                         </div>
                     {% endif %}
-                    {% empty %}
-                    <!-- Caso esteja vazia -->
                 {% endfor %}
                 <!-- FILTROS -->
                 <div class="row g-4">
@@ -80,6 +78,9 @@
                 
                 {% if nomePesquisa %}
                 <h2>Buscando por: {{ nomePesquisa }}</h2>
+                {% if not pets %}
+                <p>Nenhum pet encontrado com nome {{ nomePesquisa }}</p>
+                {% endif %}
                 {% endif %}
                 <!-- FIM FILTROS -->
                 <div class="row g-4">
@@ -87,14 +88,18 @@
                         <div id="containercardspets" class="row g-4 justify-content-left">
                             
 {% for pet in pets %}
+
+
 <div class="col-md-6 col-lg-6 col-xl-3" 
 hx-get="fotopet/{{pet.petid}}/0"
 hx-target="#fotopet{{pet.petid}}"
 hx-trigger="load">
     <div class="rounded position-relative fruite-item" >
+        <a href="{% url 'petdetalhe' pet.petid %}">
         <div class="fruite-img" id="fotopet{{pet.petid}}">
                
         </div>
+        </a>
         <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px;">{{pet.pet_tipo_pttid.pttnome}}</div>
         <div class="p-4 border border-secondary border-top-0 rounded-bottom d-flex flex-column justify-content-between">
             <div>
@@ -114,13 +119,16 @@ hx-trigger="load">
                     </div>                   
                 </div>
             </div>
-           
+            <a href="{% url 'petdetalhe' pet.petid %}">
             <div class="mt-auto">
-                <a href="{% url 'petdetalhe' pet.petid %}" class="btn azul btn-block rounded-pill px-3"> Quero adotar</a>
+                <button class="btn primaria btn-block mt-4">Quero adotar</button>                
             </div>
+            </a>
         </div>
+    
     </div>
 </div>
+
 {% endfor %}
             
                         </div>

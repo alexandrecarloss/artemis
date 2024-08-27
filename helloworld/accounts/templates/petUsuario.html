@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block titulo %}Pets do Usuário {% endblock %}
+{% block titulo %}Usuário {% endblock %}
 {% block content %}
     {% for message in messages %}
         {% if message.tags == 'error' %}
@@ -18,12 +18,11 @@
             <div class="col-md-3">
                 <!-- Menu de Navegação do Perfil -->
                 <div class="list-group">
-                    <a href="#" class="list-group-item list-group-item-action active" aria-current="true"
-                        data-target="pets">Meus Pets</a>
-                    <a href="#" class="list-group-item list-group-item-action"
-                        data-target="agendamentos">Agendamentos</a>
-                    <a href="#" class="list-group-item list-group-item-action" data-target="configuracoes">Configurações
-                        da Conta</a>
+                    <a href="#" class="list-group-item list-group-item-action " aria-current="true" data-target="pets">Meus Pets</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-target="agendamentos">Agendamentos</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-target="compras">Minhas compras</a>
+                    <a href="#" class="list-group-item list-group-item-action" data-target="notificacoes">Notificações</a> <!-- Nova aba de Notificações -->
+                    <a href="#" class="list-group-item list-group-item-action" data-target="configuracoes">Configurações da Conta</a>
                     <!-- Adicione mais links conforme necessário -->
                 </div>
             </div>
@@ -37,215 +36,192 @@
                         <!-- Seção de Pets -->
                         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-3">
                             <!-- Alterei row-cols-lg-3 para row-cols-lg-4 para exibir até 4 cards por linha em telas grandes -->
-                            {% if pets %}
-                            {% for pet in pets %}
-                            <!-- Pet 1 -->
-                            <div class="col" 
-                            hx-get="fotopet/{{pet.petid}}/2"
-                            hx-target="#fotopet{{pet.petid}}"
-                            hx-trigger="load">
-                                <!-- <div class="card h-100"
-                                    hx-get="modalpet/{{ pet.petid }}" 
-                                    hx-target="#modalpet"> -->
-                                <div class="card h-100">
-                                    <a href="#" class="text-decoration-none pet-link"                   data-bs-toggle="modal"
-                                    
-                                    data-bs-target="#modalEditarPet{{pet.petid}}" data-pet-id="{{ pet.petid }}">
-                                        <div
-                                            class="card-body text-center d-flex justify-content-center align-items-center flex-column"> 
-                                            <div id="fotopet{{pet.petid}}"></div>                                          
-                                            <h6 class="card-title mt-2 mb-0 text-body-secondary">{{ pet.petnome }}</h6>
-                                        </div>
-                                    </a>
-                                </div>
-                            </div>
                             
-<div class="modal fade" id="modalEditarPet{{pet.petid}}" tabindex="-1" aria-labelledby="modalEditarPetLabel"
-hx-get="{% url 'fotopet' pet.petid 2 %}"
-hx-target="#fotopetmodal{{pet.petid}}"
-hx-trigger="load"
->
-<div class="modal-dialog modal-dialog-centered modal-lg">
-    
-    <div class="modal-content">
-        <div class="modal-header text-white">
-            <h5 class="modal-title text-body-secondary" id="modalEditarPetLabel">Edição do Pet {{ pet.petnome }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                aria-label="Close"></button>
-        </div>
-        <div class="modal-body" style="max-height: 600px; overflow-y: auto;"
-        hx-get="{% url 'fotopet' pet.petid 2 %}"
-        hx-target="#fotopet{{pet.petid}}"
+{% for pet in pets %}
+    <!-- Pet 1 -->
+    <div class="col" 
+        hx-get="fotopet/{{ pet.petid }}/2"
+        hx-target="#fotopet{{ pet.petid }}"
         hx-trigger="load">
-            <div class="container py-5">
-                <div class="row justify-content-center">
-                    <div class="col-md-10">
-                        <div class="card">
-                            <div class="card-body">                   
-                                <!-- Seção de foto do pet -->
-                                <div class="mb-4 text-center">
-                                    <div id="fotopetmodal{{pet.petid}}"></div>
-                                    <h5 class="mt-3">{{ pet.petnome }}</h5>
-                                </div>
-                                <!-- Formulário de edição do pet -->
-                                <div class="mb-3">
-                                    <div class="card-body">
-                                        <form action="{% url 'atualizarpet' pet.petid %}" method="POST" enctype="multipart/form-data">
-                                            {% csrf_token %}
-                                            <div class="mb-3">
-                                                <label for="especie" class="form-label">Tipo do Pet (Espécie)</label>
-                                                <select
-                                                    id="especie"
-                                                    name="especie"
-                                                    class="form-select"
-                                                    id="pettipo"
-                                                    name="pettipo"
-                                                    required
-                                                    hx-get="{% url 'load_racas' %}"
-                                                    hx-target="#id_raca{{pet.petid}}"
-                                                >
-                                                    <option value="" selected></option>
-                                                    {% for tipo in pettipos %}
-                                                    <option value="{{ tipo.pttid }}" >{{ tipo.pttnome }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                                
+        <div class="card h-100">
+            <a href="#" class="text-decoration-none pet-link"
+                data-bs-toggle="modal"
+                data-bs-target="#modalEditarPet{{ pet.petid }}"
+                data-pet-id="{{ pet.petid }}">
+                <div class="card-body text-center d-flex justify-content-center align-items-center flex-column"> 
+                    <div id="fotopet{{ pet.petid }}"></div>                                          
+                    <h6 class="card-title mt-2 mb-0 text-body-secondary">{{ pet.petnome }}</h6>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="modalEditarPet{{ pet.petid }}" tabindex="-1" aria-labelledby="modalEditarPetLabel"
+        hx-get="{% url 'fotopet' pet.petid 2 %}"
+        hx-target="#fotopetmodal{{ pet.petid }}"
+        hx-trigger="load">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white">
+                    <h5 class="modal-title text-body-secondary" id="modalEditarPetLabel">Edição do Pet {{ pet.petnome }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="max-height: 600px; overflow-y: auto;"
+                    hx-get="{% url 'fotopet' pet.petid 2 %}"
+                    hx-target="#fotopet{{ pet.petid }}"
+                    hx-trigger="load">
+                    <div class="container py-5">
+                        <div class="row justify-content-center">
+                            <div class="col-md-10">
+                                <div class="card">
+                                    <div class="card-body">                   
+                                        <!-- Seção de foto do pet -->
+                                        <div class="mb-4 text-center">
+                                            <div id="fotopetmodal{{ pet.petid }}"></div>
+                                            <h5 class="mt-3">{{ pet.petnome }}</h5>
+                                        </div>
+                                        <!-- Formulário de edição do pet -->
+                                        <div class="mb-3">
+                                            <div class="card-body">
+                                                <form action="{% url 'atualizarpet' pet.petid %}" method="POST" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <div class="mb-3">
+                                                        <label for="especie" class="form-label">Tipo do Pet (Espécie)</label>
+                                                        <select
+                                                            id="especie"
+                                                            name="especie"
+                                                            class="form-select"
+                                                            required
+                                                            hx-get="{% url 'load_racas' %}"
+                                                            hx-target="#id_raca{{ pet.petid }}">
+                                                            <option value="" selected></option>
+                                                            {% for tipo in pettipos %}
+                                                                <option value="{{ tipo.pttid }}">{{ tipo.pttnome }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="petnome" class="form-label">Nome</label>
+                                                        <input
+                                                            type="text"
+                                                            class="form-control"
+                                                            id="petnome"
+                                                            name="petnome"
+                                                            required
+                                                            value="{{ pet.petnome }}">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Sexo</label>
+                                                        <div class="form-check">
+                                                            <input
+                                                                class="form-check-input"
+                                                                type="radio"
+                                                                name="petsexo"
+                                                                id="sexoM"
+                                                                value="M"
+                                                                checked>
+                                                            <label class="form-check-label" for="sexoM">Macho</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input
+                                                                class="form-check-input"
+                                                                type="radio"
+                                                                name="petsexo"
+                                                                id="sexoF"
+                                                                value="F">
+                                                            <label class="form-check-label" for="sexoF">Fêmea</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="petdtnascto" class="form-label">Data de nascimento (aproximada)</label>
+                                                        <input
+                                                            type="date"
+                                                            class="form-control"
+                                                            id="petdtnascto"
+                                                            name="petdtnascto"
+                                                            required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="petporte" class="form-label">Porte do Pet</label>
+                                                        <div class="d-flex align-items-center">
+                                                            <select
+                                                                class="form-select"
+                                                                id="petporte"
+                                                                name="petporte"
+                                                                required>
+                                                                {% for porte in petportes %}
+                                                                    <option value="{{ porte.ptpid }}">{{ porte.ptpnome }}: {{ porte.ptpdescricao }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                            <button
+                                                                class="btn btn-link"
+                                                                type="button"
+                                                                id="btnInfoPorte"
+                                                                data-bs-toggle="popover"
+                                                                title="Porte do Pet"
+                                                                data-bs-content="Pequeno: Geralmente até 30 cm de altura. Médio: Costuma ter entre 30 cm e 60 cm de altura. Grande: Geralmente mais de 60 cm de altura.">
+                                                                <i class="bi bi-question-circle"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="petpeso" class="form-label">Peso (em kg)</label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            class="form-control"
+                                                            id="petpeso"
+                                                            name="petpeso"
+                                                            required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="id_raca{{ pet.petid }}" class="form-label">Raça do Pet</label>
+                                                        <select class="form-select" id="id_raca{{ pet.petid }}" name="petraca" required></select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="petcastrado" class="form-label">Castrado</label>
+                                                        <select
+                                                            class="form-select"
+                                                            id="petcastrado"
+                                                            name="petcastrado"
+                                                            required>
+                                                            <option value="Castrado">Castrado</option>
+                                                            <option value="Não Castrado">Não Castrado</option>
+                                                            <option value="Não sei">Não sei</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="formFile" class="form-label">Escolha as fotos do Pet</label>
+                                                        <input
+                                                            class="form-control"
+                                                            type="file"
+                                                            id="formFile"
+                                                            name="fotos_pet"
+                                                            multiple>
+                                                    </div>
+                                                    <button type="submit" class="btn primaria">Atualizar</button>
+                                                </form>
+                                                <!-- Formulário para remover pet -->
+                                                <form action="{% url 'removerpet' pet.petid %}" method="post">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">Remover pet</button>
+                                                </form>
                                             </div>
-                                            <div class="mb-3">
-                                                <label for="petnome" class="form-label">Nome</label>
-                                                <input
-                                                    type="text"
-                                                    class="form-control"
-                                                    id="petnome"
-                                                    name="petnome"
-                                                    required
-                                                    value="{{ pet.petnome }}"
-                                                >
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Sexo</label>
-                                                <div class="form-check">
-                                                    <input
-                                                        class="form-check-input"
-                                                        type="radio"
-                                                        name="petsexo"
-                                                        id="sexoM"
-                                                        value="M"
-                                                        checked
-                                                    >
-                                                    <label class="form-check-label" for="sexoM">
-                                                        Macho
-                                                    </label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input
-                                                        class="form-check-input"
-                                                        type="radio"
-                                                        name="petsexo"
-                                                        id="sexoF"
-                                                        value="F"
-                                                    >
-                                                    <label class="form-check-label" for="sexoF">
-                                                        Fêmea
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="petdtnascto" class="form-label">Data de nascimento (aproximada)</label>
-                                                <input
-                                                    type="date"
-                                                    class="form-control"
-                                                    id="petdtnascto"
-                                                    name="petdtnascto"
-                                                    required
-                                                >
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="petporte" class="form-label">Porte do Pet</label>
-                                                <div class="d-flex align-items-center">
-                                                    <select
-                                                        class="form-select"
-                                                        id="petporte"
-                                                        name="petporte"
-                                                        required
-                                                    >
-                                                    {% for porte in petportes %}
-                                                        <option value="{{porte.ptpid }}">{{ porte.ptpnome }}: {{ porte.ptpdescricao }}</option>
-                                                    {% endfor %}
-                                                    </select>
-                                                    <button
-                                                        class="btn btn-link"
-                                                        type="button"
-                                                        id="btnInfoPorte"
-                                                        data-bs-toggle="popover"
-                                                        title="Porte do Pet"
-                                                        data-bs-content="Pequeno: Geralmente até 30 cm de altura.Médio: Costuma ter entre 30 cm e 60 cm de altura.Grande: Geralmente mais de 60 cm de altura."
-                                                    >
-                                                        <i class="bi bi-question-circle"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="petpeso" class="form-label">Peso (em kg)</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    class="form-control"
-                                                    id="petpeso"
-                                                    name="petpeso"
-                                                    required                            
-                                                >
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="id_raca{{pet.petid}}" class="form-label">Raça do Pet</label>
-                                                <select class="form-select" id="id_raca{{pet.petid}}" name="petraca" required>          
-                                                </select>
-                                            </div>
-                                            
-                                            <div class="mb-3">
-                                                <label for="petcastrado" class="form-label">Castrado</label>
-                                                <select
-                                                    class="form-select"
-                                                    id="petcastrado"
-                                                    name="petcastrado"
-                                                    required
-                                                >
-                                                    <option value="Castrado">Castrado</option>
-                                                    <option value="Não Castrado">Não Castrado</option>
-                                                    <option value="Não sei">Não sei</option>
-                                                </select>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="formFile" class="form-label">Escolha as fotos do Pet</label>
-                                                <input
-                                                    class="form-control"
-                                                    type="file"
-                                                    id="formFile"
-                                                    name="fotos_pet"
-                                                    multiple
-                                                >
-                                            </div>
-                                            <button type="submit" class="btn primaria">Atualizar</button>
-                                        </form>
-                                        <!-- Form remover pet -->
-                                        <form action="{% url 'removerpet' pet.petid %}" method="post">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger">Remover pet</button>
-                                        </form>
+                                        </div>                                   
                                     </div>
-                                </div>                                   
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>   
-</div>
-                            {% endfor %}
-                            {% else %}
-                            <p>Você ainda não possui pets cadastrados</p>
-                            {% endif %}
+    </div>
+{% endfor %}
+
+{% if not pets %}
+<p>Você ainda não possui pets cadastrados</p>
+{% endif %}
 
                             <!-- Adicione mais colunas conforme necessário para cada pet -->
                         </div>
@@ -258,17 +234,137 @@ hx-trigger="load"
                     </button>
                 </a>
                 </div>
+                
                 <!-- Modal de edição do pet -->
                 <div id="modalpet"></div>
                 <div class="card conteudo" id="agendamentos">
                     <div class="card-body">
-                        <!-- Aqui você pode listar os agendamentos -->
-                        <p>Agendamentos aqui...</p>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Serviço</th>
+                                    <th scope="col">Pet</th>
+                                    <th scope="col">Valor</th>
+                                    <th scope="col">Tipo de serviço</th>
+                                    <th scope="col">Pet shop</th>
+                                    <th scope="col">Data</th>
+                                    <th scope="col">Hora</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Editar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for solicita in solicitacoes %}
+                                <tr>
+                                    <td>
+                                        <p class="mb-0 mt-4">{{ solicita.servico_serid.serdescricao }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="mb-0 mt-4">{{ solicita.solpetid.petnome }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="mb-0 mt-4">R$ {{ solicita.servico_serid.servalor }}</p>
+                                    </td>
+                                    <td>
+                                        <div class="input-group quantity mb-5">
+                                            {{ solicita.servico_serid.tiposervico_tpsid.tpsnome }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="mb-0 mt-4">{{ solicita.servico_serid.petshop_ptsid.ptsnome }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="mb-0 mt-4">{{ solicita.soldthr.date }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="mb-0 mt-4">{{ solicita.soldthr.time }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="mb-0 mt-4">{{ solicita.solstatus }}</p>
+                                    </td>
+                                    <td>
+                                        {% if solicita.solstatus == 'Requerido' %}
+                                        <form action="{% url 'negar_solicitacao' solicita.solid %}" method="post">
+                                            {% csrf_token %}
+                                            <button class="btn btn-md rounded-circle bg-light border mt-4" type="submit">
+                                                <i class="fa fa-times text-danger"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <form action="{% url 'atualizar_pessoa' pessoa.pesid %}" method="post">
+            
+                <div class="card conteudo" id="compras">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Minhas Compras</h5>
+                        <ul class="list-group">
+                            {% for venda in vendas %}
+                            <li  hx-get="../../venda/fotoproduto/{{ venda.venpro.proid }}/2"
+                            hx-target="#fotoproduto{{ venda.venid }}"
+                            hx-trigger="load">
+                                <h6>Compra #{{ venda.venid }}</h6>
+                                <ul class="list-group list-group-flush">
+                                    <a href="{% url 'usuario_produto_detalhe' venda.venpro.proid %}">
+                                    <li >
+                                        <div class="row">
+                                            <div class="d-flex align-items-center" id="fotoproduto{{ venda.venid }}">
+                                    
+                                            </div>
+                                            <div class="col-md-10">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <h6>{{ venda.venpro.pronome }}</h6>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <p>Quantidade: {{ venda.venqtd }}</p>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <p>Total: R$ {{ venda.venvalor }}</p>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <p>Forma de pagamento: {{ venda.venformapagamento_fpgid.fpgdescricao }}</p>
+                                                    </div>
+                                                    <span class="text-muted">Feita em:{{ venda.vendthora.date }} às {{ venda.vendthora.time }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </a>
+                                </ul>
+                                <hr>
+                            </li>
+                            {% endfor %}
+                            <p>Total das Compra: R$ {{  total_compras  }}</p>
+
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card conteudo" id="notificacoes">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Notificações</h5>
+                        <ul class="list-group" style="max-height: 300px; overflow-y: auto;">
+                            {% for tentativa in tentativas_adocao %}
+                            <li class="list-group-item border-bottom">
+                                <h6>Adoção</h6>
+                                <p>Pet: {{ tentativa.tta_petadocao.pet_petid.petnome }}</p>
+                                <p>Ong: {{ tentativa.tta_petadocao.ong_ongid.ongnome }}</p>
+                                <p>Status: {{ tentativa.ttastatus }}</p>
+                                <span class="text-muted">Recebida em:{{ tentativa.ttadthora.date }} às {{ tentativa.ttadthora.time }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card conteudo" id="configuracoes">
+                <form action="{% url 'atualizar_pessoa' %}" method="post">
                     {% csrf_token %}
-                    <div class="card conteudo" id="configuracoes">
                         <div class="card-body">
                             <!-- Aqui você pode listar as configurações da conta -->
                                 <div class="form-group">
@@ -282,18 +378,29 @@ hx-trigger="load"
                                 <div class="form-group">
                                 <label for="pesdtnascto">Data de Nascimento:</label>
                                 <input type="date" class="form-control" id="pesdtnascto" name="pesdtnascto" placeholder="Data de Nascimento"
-                                    required>
+                                    required value="{{ nascimento.ano }}-{{ nascimento.mes }}-{{ nascimento.dia }}">
                                 </div>
                                 <div class="form-group">
                                 <label>Gênero:</label><br>
+                                {% if pessoa.pessexo == 'M' %}
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="pessexo" id="masculino" value="M" required>
+                                    <input class="form-check-input" type="radio" name="pessexo" id="masculino" value="M" required checked>
                                     <label class="form-check-label" for="masculino">Masculino</label>
                                 </div>
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="pessexo" id="feminino" value="F" required>
                                     <label class="form-check-label" for="feminino">Feminino</label>
                                 </div>
+                                {% else %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="pessexo" id="masculino" value="M" required>
+                                    <label class="form-check-label" for="masculino">Masculino</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="pessexo" id="feminino" value="F" required checked>
+                                    <label class="form-check-label" for="feminino">Feminino</label>
+                                </div>
+                                {% endif %}
                                 </div>
                                 <p>
                                     <div class="form-group">
@@ -353,10 +460,6 @@ hx-trigger="load"
                                 <div class="form-group">
                                 <label for="pesnumero">Número:</label>
                                 <input type="number" class="form-control" id="pesnumero" name="pesnumero" placeholder="Número" required value="{{ pessoa.pesnumero }}">
-                                </div>
-                                <div class="form-group">
-                                <label for="pesemail">Email:</label>
-                                <input type="email" class="form-control" id="pesemail" name="pesemail" placeholder="Email" required value="{{ pessoa.pesemail }}">
                                 </div>
                                 <div class="form-group">
                                 <label for="pestelefone">Telefone:</label>
