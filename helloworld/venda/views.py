@@ -16,28 +16,8 @@ from django.db.models.functions import ExtractMonth
 from .utils import render_to_pdf
 from django.http import HttpResponse
 
-token = '8d5dec11c6d81e78b4aaa63bc56a98f53cf6f30e'
-headers = {
-    'Authorization': f'Token {token}',
-    'Content-Type': 'application/json',
-}
-
 ##################### CRUD serviço #####################
 def servicos(request):
-    # current_site = get_current_site(request)
-    # mail_subject = "Notificação de compra"
-    # message = f'Acesse o site pelo link http://{current_site.domain}/accounts/usuario/'
-    # #Envio do e-mail   
-    # try:
-    #     to_email = 'karurosualexandresouza1234@gmail.com'
-    #     email = EmailMessage(
-    #         mail_subject, message, to=[to_email], from_email="projeto.artemis@outlook.com"
-    #     )
-    #     email.send()
-    #     print(email)
-    # except Exception as  erro:
-    #     print('Excessão: ', erro)
-    #     messages.error(request, 'Ocorreu um erro ao enviar e-mail')
     servicos = Servico.objects.all()
     return render(request, 'servicos.html', {'servicos': servicos})
 # Create your views here.
