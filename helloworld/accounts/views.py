@@ -41,29 +41,34 @@ def cadastro_email_enviado(request):
 
 #Função que envia e-mail ao usuário, é chamada pela view cadastro_user
 def envia_email(request, user):
-    #Declaração das variáveis no e-mail
     current_site = get_current_site(request)
     mail_subject = "Ative sua conta"
-    message = render_to_string("account_activate_email.html", { 
+
+    message = render_to_string("account_activate_email.html", {
         "user": user,
         "domain": current_site.domain,
         "uid": urlsafe_base64_encode(force_bytes(user.pk)),
-        "token": account_activation_token.make_token(user)
-    }) 
-    #Envio do e-mail   
+        "token": account_activation_token.make_token(user),
+    })
+
     try:
-        to_email = request.POST.get('pesemail')
         email = EmailMessage(
-            mail_subject, message, to=[to_email], from_email="projeto.artemis@outlook.com"
+            mail_subject,
+            message,
+            from_email="projeto.artemis@outlook.com",
+            to=[user.email],
         )
-        email.send()
-        messages.success(request, "Por favor, cheque seu e-mail e caixa de spam para completar o registro.") 
-    #Erro, retornar para cadastro_user
-    except Exception as  erro:
-        print('Excessão: ', erro)
-        messages.error(request, 'Ocorreu um erro ao enviar e-mail')
-        return render(request, 'cadastro_user.html')     
-    return render(request, 'cadastro_user.html')          
+        email.content_subtype = "html"
+        email.send(fail_silently=False)
+
+        messages.success(
+            request,
+            "Por favor, cheque seu e-mail e a caixa de spam para ativar sua conta."
+        )
+
+    except Exception as erro:
+        print("Erro ao enviar e-mail:", erro)
+        messages.error(request, "Erro ao enviar e-mail de ativação.")         
 
 # View para cadastrar conta de usuário
 def cadastro_user(request):   
@@ -285,9 +290,14 @@ def password_reset(request):
                 #Envio do e-mail
                 to_email = email
                 email = EmailMessage(
-                    mail_subject, message, to=[to_email], from_email="projeto.artemis@outlook.com"
+                    mail_subject,
+                    message,
+                    from_email="projeto.artemis@outlook.com",
+                    to=[to_email],
                 )
+                email.content_subtype = "html"
                 email.send()
+
                 messages.success(request, "Por favor, cheque seu e-mail e caixa de spam para continuar.")
                 return redirect('password_reset_done')
             except Exception as erro:

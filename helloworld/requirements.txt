@@ -34,7 +34,6 @@ pypdf==4.3.1
 pypng==0.20220715.0
 PySocks==1.7.1
 python-bidi==0.6.0
-python-decouple==3.8
 PyYAML==6.0.2
 qrcode==7.4.2
 reportlab==4.2.2
@@ -52,6 +51,5 @@ tzdata==2024.1
 tzlocal==5.2
 uritools==4.0.3
 urllib3==2.2.1
-vboxapi==1.0
 webencodings==0.5.1
 xhtml2pdf==0.2.16
