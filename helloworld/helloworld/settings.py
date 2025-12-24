@@ -176,5 +176,3 @@ REST_FRAMEWORK = {
     #     'user': '100/minute'
     # }
 }
-
-# 8d5dec11c6d81e78b4aaa63bc56a98f53cf6f30e
